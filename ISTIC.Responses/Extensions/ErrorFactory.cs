@@ -24,4 +24,8 @@ public static class ErrorFactory
     public static Error ForbiddenError(string description = "Você não tem permissão para acessar este recurso.", Dictionary<string, List<string>> fieldErrors = null)
         => new Error("Forbidden", description, fieldErrors)
             .SetStatusCode(HttpStatusCode.Forbidden);
+
+    public static Error GenericError(string description, HttpStatusCode statusCode, Dictionary<string, List<string>> fieldErrors = null)
+        => new Error(statusCode.ToString(), description, fieldErrors)
+            .SetStatusCode(statusCode);
 }
