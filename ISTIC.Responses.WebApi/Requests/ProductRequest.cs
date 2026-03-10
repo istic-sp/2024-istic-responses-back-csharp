@@ -1,6 +1,4 @@
-namespace ISTIC.Responses.WebApi.Features.ErrorFactory.Models;
-
-public class ProductModel
+public class ProductRequest
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;

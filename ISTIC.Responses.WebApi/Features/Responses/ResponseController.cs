@@ -1,19 +1,18 @@
 using ISTIC.Responses.Core;
-using ISTIC.Responses.WebApi.Features.ErrorFactory.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace ISTIC.Responses.WebApi.Features.ErrorFactory;
+namespace ISTIC.Responses.WebApi.Features.Responses;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ErrorFactoryController : ControllerBase
+public class ResponseController : ControllerBase
 {
     /// <summary>
     /// Lista todos os produtos.
     /// Envie simulateError=true para simular um InternalServerError.
     /// </summary>
     [HttpGet]
-    public async Task<ResponseOf<List<ProductModel>>> GetAll([FromQuery] bool simulateError = false)
+    public async Task<ResponseOf<List<ProductRequest>>> GetAll([FromQuery] bool simulateError = false)
     {
         return await Task.FromResult(Methods.GetAll.Handle(simulateError));
     }
@@ -24,7 +23,7 @@ public class ErrorFactoryController : ControllerBase
     /// Envie simulateUnauthorized=true para simular UnauthorizedError.
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<ResponseOf<ProductModel>> GetById(Guid id, [FromQuery] bool simulateUnauthorized = false)
+    public async Task<ResponseOf<ProductRequest>> GetById(Guid id, [FromQuery] bool simulateUnauthorized = false)
     {
         return await Task.FromResult(Methods.GetById.Handle(id, simulateUnauthorized));
     }

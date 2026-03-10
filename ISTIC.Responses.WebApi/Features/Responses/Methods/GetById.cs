@@ -1,12 +1,11 @@
 using ISTIC.Responses.Core;
-using ISTIC.Responses.WebApi.Features.ErrorFactory.Models;
 using ErrorFactoryHelper = ISTIC.Responses.Extensions.ErrorFactory;
 
-namespace ISTIC.Responses.WebApi.Features.ErrorFactory.Methods;
+namespace ISTIC.Responses.WebApi.Features.Responses.Methods;
 
 public static class GetById
 {
-    public static ResponseOf<ProductModel> Handle(Guid id, bool simulateUnauthorized)
+    public static ResponseOf<ProductRequest> Handle(Guid id, bool simulateUnauthorized)
     {
         if (simulateUnauthorized)
             return ErrorFactoryHelper.UnauthorizedError();
@@ -17,7 +16,7 @@ public static class GetById
                 { "id", ["O campo Id não pode ser vazio."] }
             });
 
-        var product = new ProductModel
+        var product = new ProductRequest
         {
             Id = id,
             Name = "Notebook",

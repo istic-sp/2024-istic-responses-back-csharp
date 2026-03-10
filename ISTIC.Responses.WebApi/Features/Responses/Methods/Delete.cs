@@ -1,7 +1,7 @@
 using ISTIC.Responses.Core;
 using ErrorFactoryHelper = ISTIC.Responses.Extensions.ErrorFactory;
 
-namespace ISTIC.Responses.WebApi.Features.ErrorFactory.Methods;
+namespace ISTIC.Responses.WebApi.Features.Responses.Methods;
 
 public static class Delete
 {
