@@ -1,4 +1,5 @@
 using ISTIC.Responses.Core;
+using ISTIC.Responses.WebApi.DTOs.Results;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ISTIC.Responses.WebApi.Features.Responses;
@@ -12,7 +13,7 @@ public class ResponseController : ControllerBase
     /// Envie simulateError=true para simular um InternalServerError.
     /// </summary>
     [HttpGet]
-    public async Task<ResponseOf<List<ProductRequest>>> GetAll([FromQuery] bool simulateError = false)
+    public async Task<ResponseOf<ProductRequest>> GetAll([FromQuery] bool simulateError = false)
     {
         return await Task.FromResult(Methods.GetAll.Handle(simulateError));
     }
@@ -35,9 +36,9 @@ public class ResponseController : ControllerBase
     /// Envie Name="Duplicado" para simular Conflict (409).
     /// </summary>
     [HttpPost]
-    public async Task<ResponseOf<RegisterResult<Guid>>> Create([FromBody] CreateProductRequest request)
+    public async Task<ResponseOf<RegisterResult<Guid>>> Create([FromBody] CreateProductRequest request, [FromQuery] bool simulateCustomError = false)
     {
-        return await Task.FromResult(Methods.Create.Handle(request));
+        return await Task.FromResult(Methods.Create.Handle(request, simulateCustomError));
     }
 
     /// <summary>

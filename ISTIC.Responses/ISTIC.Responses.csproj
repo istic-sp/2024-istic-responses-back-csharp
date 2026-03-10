@@ -7,8 +7,8 @@
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
     <Company>SENAI</Company>
-    <Version>1.0.5</Version>
-    <Authors>Diogo Botton, Saulo Santos</Authors>
+    <Version>1.0.6</Version>
+    <Authors>Diogo Botton, Saulo Santos, Lucas Pandolfi</Authors>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/istic-sp/ISTIC.Responses</RepositoryUrl>
     <Title>ISTIC.Responses</Title>

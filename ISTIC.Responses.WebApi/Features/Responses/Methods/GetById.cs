@@ -18,10 +18,10 @@ public static class GetById
 
         var product = new ProductRequest
         {
-            Id = id,
-            Name = "Notebook",
-            Description = "Notebook Dell Inspiron",
-            Price = 4500.00m
+            Items = new List<ProductRequestItem>
+            {
+                new ProductRequestItem { Id = id, Name = "Notebook", Description = "Notebook Dell Inspiron", Price = 4500.00m }
+            }
         };
 
         return product;
