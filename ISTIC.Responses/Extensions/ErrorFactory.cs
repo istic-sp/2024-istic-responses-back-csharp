@@ -28,4 +28,12 @@ public static class ErrorFactory
     public static Error CustomError(string description, HttpStatusCode statusCode, Dictionary<string, List<string>> fieldErrors = null)
         => new Error(statusCode.ToString(), description, fieldErrors)
             .SetStatusCode(statusCode);
+
+    public static CustomError<T> CustomError<T>(string description, HttpStatusCode statusCode, Dictionary<string, List<string>> fieldErrors = null, T data = default)
+        => (CustomError<T>) new CustomError<T>(statusCode.ToString(), description, fieldErrors, data)
+            .SetStatusCode(statusCode);
+
+    public static CustomError<T> CustomErrorWithoutData<T>(string description, HttpStatusCode statusCode, Dictionary<string, List<string>> fieldErrors = null)
+        => (CustomError<T>) new CustomError<T>(statusCode.ToString(), description, fieldErrors)
+            .SetStatusCode(statusCode);
 }

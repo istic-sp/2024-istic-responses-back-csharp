@@ -13,6 +13,7 @@ builder.Services.AddControllers(options =>
 {
     options.JsonSerializerOptions.Converters.Add(new ResponseOfJsonConverterFactory());
     options.JsonSerializerOptions.Converters.Add(new ResponseJsonConverterFactory());
+    options.JsonSerializerOptions.Converters.Add(new CustomResponseOfJsonConverterFactory());
 });
 
 builder.Services.AddEndpointsApiExplorer();

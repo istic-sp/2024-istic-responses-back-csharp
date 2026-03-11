@@ -3,7 +3,7 @@ using ErrorFactoryHelper = ISTIC.Responses.Extensions.ErrorFactory;
 
 namespace ISTIC.Responses.WebApi.Features.Responses.Methods;
 
-public static class GetById
+public static class Detail
 {
     public static ResponseOf<ProductRequest> Handle(Guid id, bool simulateUnauthorized)
     {

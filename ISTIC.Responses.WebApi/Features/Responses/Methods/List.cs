@@ -3,7 +3,7 @@ using ErrorFactoryHelper = ISTIC.Responses.Extensions.ErrorFactory;
 
 namespace ISTIC.Responses.WebApi.Features.Responses.Methods;
 
-public static class GetAll
+public static class List
 {
     private static readonly ProductRequest _products =
     new ProductRequest

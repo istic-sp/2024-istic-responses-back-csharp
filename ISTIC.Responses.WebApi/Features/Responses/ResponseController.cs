@@ -1,5 +1,6 @@
 using ISTIC.Responses.Core;
 using ISTIC.Responses.WebApi.DTOs.Results;
+using ISTIC.Responses.WebApi.DTOs.Results.Errors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ISTIC.Responses.WebApi.Features.Responses;
@@ -13,9 +14,9 @@ public class ResponseController : ControllerBase
     /// Envie simulateError=true para simular um InternalServerError.
     /// </summary>
     [HttpGet]
-    public async Task<ResponseOf<ProductRequest>> GetAll([FromQuery] bool simulateError = false)
+    public async Task<ResponseOf<ProductRequest>> List([FromQuery] bool simulateError = false)
     {
-        return await Task.FromResult(Methods.GetAll.Handle(simulateError));
+        return await Task.FromResult(Methods.List.Handle(simulateError));
     }
 
     /// <summary>
@@ -24,9 +25,9 @@ public class ResponseController : ControllerBase
     /// Envie simulateUnauthorized=true para simular UnauthorizedError.
     /// </summary>
     [HttpGet("{id}")]
-    public async Task<ResponseOf<ProductRequest>> GetById(Guid id, [FromQuery] bool simulateUnauthorized = false)
+    public async Task<ResponseOf<ProductRequest>> Detail(Guid id, [FromQuery] bool simulateUnauthorized = false)
     {
-        return await Task.FromResult(Methods.GetById.Handle(id, simulateUnauthorized));
+        return await Task.FromResult(Methods.Detail.Handle(id, simulateUnauthorized));
     }
 
     /// <summary>
@@ -36,7 +37,7 @@ public class ResponseController : ControllerBase
     /// Envie Name="Duplicado" para simular Conflict (409).
     /// </summary>
     [HttpPost]
-    public async Task<ResponseOf<RegisterResult<Guid>>> Create([FromBody] CreateProductRequest request, [FromQuery] bool simulateCustomError = false)
+    public async Task<CustomResponseOf<RegisterResult<Guid>, CustomErrorResult>> Create([FromBody] CreateProductRequest request, [FromQuery] bool simulateCustomError = false)
     {
         return await Task.FromResult(Methods.Create.Handle(request, simulateCustomError));
     }
