@@ -1,5 +1,5 @@
 using ISTIC.Responses.Core;
-using ErrorFactoryHelper = ISTIC.Responses.Extensions.ErrorFactory;
+using ISTIC.Responses.Extensions;
 
 namespace ISTIC.Responses.WebApi.Features.Responses.Methods;
 
@@ -19,7 +19,7 @@ public static class List
     public static ResponseOf<ProductRequest> Handle(bool simulateError)
     {
         if (simulateError)
-            return ErrorFactoryHelper.InternalServerError("Falha ao acessar o banco de dados para listar os produtos.");
+            return ErrorFactory.InternalServerError("Falha ao acessar o banco de dados para listar os produtos.");
 
         return _products;
     }

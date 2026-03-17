@@ -13,6 +13,7 @@
     <RepositoryUrl>https://github.com/istic-sp/ISTIC.Responses</RepositoryUrl>
     <Title>ISTIC.Responses</Title>
     <Description>O pacote ISTIC.Responses foi desenvolvido pelo Instituto SENAI de Tecnologia da Informação e Comunicação (ISTIC) para fornecer uma base padronizada e ferramentas essenciais para o desenvolvimento de aplicações em C#. Este pacote inclui funcionalidades de padrões de resposta que facilitam a padronização de retornos em endpoints de APIs.</Description>
+	<GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

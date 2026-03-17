@@ -1,5 +1,5 @@
 using ISTIC.Responses.Core;
-using ErrorFactoryHelper = ISTIC.Responses.Extensions.ErrorFactory;
+using ISTIC.Responses.Extensions;
 
 namespace ISTIC.Responses.WebApi.Features.Responses.Methods;
 
@@ -8,13 +8,10 @@ public static class Detail
     public static ResponseOf<ProductRequest> Handle(Guid id, bool simulateUnauthorized)
     {
         if (simulateUnauthorized)
-            return ErrorFactoryHelper.UnauthorizedError();
+            return ErrorFactory.UnauthorizedError();
 
         if (id == Guid.Empty)
-            return ErrorFactoryHelper.BadRequestError("O Id informado não é válido.", new Dictionary<string, List<string>>
-            {
-                { "id", ["O campo Id não pode ser vazio."] }
-            });
+            return ErrorFactory.BadRequestError("O Id informado não é válido.").AddFieldErrors(("id", "O campo Id não pode ser vazio."));
 
         var product = new ProductRequest
         {
