@@ -1,123 +1,297 @@
 # ISTIC.Responses
 
-O pacote ISTIC.Responses foi desenvolvido pelo Instituto SENAI de Tecnologia da Informação e Comunicação (ISTIC) para fornecer uma base padronizada e ferramentas essenciais para o desenvolvimento de aplicações em C#. Este pacote inclui funcionalidades de padrões de resposta que facilitam a padronização de retornos em endpoints de APIs.
+O pacote **ISTIC.Responses** foi desenvolvido pelo Instituto SENAI de Tecnologia da Informação e Comunicação (ISTIC) para fornecer uma base padronizada de respostas para endpoints de APIs em C# .NET.
 
-## Como configurar?
+## Estrutura do Projeto
 
-Para configurar o ISTIC.Responses em seu projeto em C# .NET, é necessário adicionar algumas injeções de dependência na StartUp.cs ou Program.cs do seu projeto.
-
-Primeiramente precisamos configurar alguns filtros e conversores json no método ***AddControllers***
-
-```csharp
-    var builder = WebApplication.CreateBuilder(args);
-
-    builder.Services.AddControllers(options =>
-    {
-        options.Filters.Add<CustomActionFilter>(); // Adicionando filtro
-    })
-    .AddJsonOptions(options =>
-    {
-        // Adicionando conversores json
-        options.JsonSerializerOptions.Converters.Add(new ResponseOfJsonConverterFactory());
-        options.JsonSerializerOptions.Converters.Add(new ResponseJsonConverterFactory());
-    });
+```
+├── ISTIC.Responses/                  # Pacote (biblioteca) de respostas padronizadas (.NET 8)
+│   ├── Core/                         # Classes principais
+│   │   ├── Response.cs               # Resposta sem corpo (sucesso vazio ou erro padrão)
+│   │   ├── ResponseOf<T>.cs          # Resposta com resultado genérico ou erro padrão
+│   │   ├── Error.cs                  # Modelo de erro padrão
+│   │   ├── CustomError<T>.cs         # Modelo de erro com campo Data genérico
+│   │   ├── CustomResponse<T>.cs      # Resposta sem corpo com erro customizado
+│   │   └── CustomResponseOf<T,E>.cs  # Resposta com resultado genérico ou erro customizado
+│   ├── Converters/                   # Conversores JSON (System.Text.Json)
+│   ├── Extensions/                   # ErrorFactory, ResponseExtensions, SystemTypeExtensions
+│   ├── Filters/                      # CustomActionFilter (define o status code da resposta HTTP)
+│   ├── Swagger/                      # ResponseOperationFilter (documenta schemas de sucesso/erro)
+│   └── Interfaces/                   # IResponse
+│
+└── ISTIC.Responses.WebApi/           # API de demonstração (.NET 10)
+    ├── Program.cs                    # Configuração da aplicação
+    ├── DTOs/                         # Modelos de request e result
+    └── Features/Responses/           # Controller e métodos de exemplo (CRUD de Produtos)
 ```
 
-Para documentar o retorno das respostas tanto de sucesso quanto de erro é necessário adicionar algumas configurações no método ***AddSwaggerGen***
+## Pré-requisitos
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download) (necessário para o projeto WebApi)
+- [.NET 8 SDK](https://dotnet.microsoft.com/download) (necessário para o projeto do pacote)
+
+## Como executar
+
+```bash
+# Clone o repositório
+git clone https://github.com/istic-sp/2024-istic-responses-back-csharp.git
+cd 2024-istic-responses-back-csharp
+
+# Restaure as dependências
+dotnet restore
+
+# Execute a API de demonstração
+dotnet run --project ISTIC.Responses.WebApi
+```
+
+Após executar, acesse o Swagger UI em: **https://localhost:{porta}/swagger**
+
+---
+
+## Tipos de Resposta
+
+O pacote oferece três tipos de resposta para cobrir diferentes cenários:
+
+### 1. `Response` — Resposta sem corpo
+
+Para endpoints que não precisam retornar dados no sucesso (ex.: DELETE, PUT).
+
+- **Sucesso:** retorna apenas o status code (sem corpo)
+- **Erro:** retorna o objeto `Error` padrão
 
 ```csharp
-services.AddSwaggerGen(options =>
+public async Task<Response> Delete(Guid id)
 {
-    options.CustomSchemaIds(d => d.GetSchemaId()); // Identifica os schemas genéricos e adiciona-os
-    options.OperationFilter<ResponseOperationFilter>(); // Adicionando filtros para os tipos de resposta
+    // Sucesso (200)
+    return Response.Success();
+
+    // Sucesso com status code diferente
+    return Response.Success(HttpStatusCode.NoContent);
+
+    // Erro
+    return Response.ErrorHandle("Error", "Usuário não encontrado.", HttpStatusCode.NotFound);
+}
+```
+
+### 2. `ResponseOf<T>` — Resposta com resultado genérico
+
+Para endpoints que retornam dados no sucesso (ex.: GET, POST).
+
+- **Sucesso:** retorna o objeto `T` como corpo da resposta
+- **Erro:** retorna o objeto `Error` padrão
+
+```csharp
+public async Task<ResponseOf<RegisterResult<Guid>>> Add(Model request)
+{
+    // Sucesso — conversão implícita
+    return new RegisterResult<Guid> { Id = Guid.NewGuid() };
+
+    // Erro — via ErrorFactory
+    return ErrorFactory.BadRequestError("Erro de validação.");
+}
+```
+
+### 3. `CustomResponseOf<TResult, TError>` — Resposta com erro customizado
+
+Para endpoints que precisam retornar **dados adicionais** no erro, além do `Error` padrão.
+
+- **Sucesso:** retorna o objeto `TResult` como corpo da resposta
+- **Erro:** retorna o objeto `CustomError<TError>`, que herda de `Error` e adiciona um campo `Data` do tipo `TError`
+
+```csharp
+public async Task<CustomResponseOf<RegisterResult<Guid>, CustomErrorResult>> Create(CreateProductRequest request)
+{
+    // Sucesso — conversão implícita
+    return new RegisterResult<Guid> { Id = Guid.NewGuid() };
+
+    // Erro com dados customizados
+    return ErrorFactory.CustomError(
+        "Já existe um produto com este nome.",
+        HttpStatusCode.Conflict,
+        null,
+        new CustomErrorResult("Conflito", "Já existe um produto com este nome.")
+    );
+
+    // Erro sem dados customizados (Data será null)
+    return ErrorFactory.CustomErrorWithoutData<CustomErrorResult>(
+        "Erro de validação.",
+        HttpStatusCode.BadRequest,
+        fieldErrors
+    );
+}
+```
+
+### Modelo de erro padrão (`Error`)
+
+```json
+{
+  "name": "Bad Request",
+  "description": "Erro de validação ao criar o produto.",
+  "fieldErrors": {
+    "name": ["O campo Nome é obrigatório."]
+  }
+}
+```
+
+### Modelo de erro customizado (`CustomError<T>`)
+
+```json
+{
+  "name": "Conflict",
+  "description": "Já existe um produto com este nome.",
+  "fieldErrors": {},
+  "data": {
+    "title": "Conflito",
+    "description": "Já existe um produto com este nome."
+  }
+}
+```
+
+---
+
+## Como configurar em seu projeto
+
+### 1. Adicionar filtros e conversores JSON
+
+No `Program.cs` (ou `Startup.cs`):
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<CustomActionFilter>();
+})
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new ResponseOfJsonConverterFactory());
+    options.JsonSerializerOptions.Converters.Add(new ResponseJsonConverterFactory());
+    options.JsonSerializerOptions.Converters.Add(new CustomResponseOfJsonConverterFactory());
 });
 ```
 
-## Exemplos de uso:
-
-Para utilizar os padrões de retorno da ISTIC.Responses é necessário utilizar o ***ResponseOf<T>*** para apresentar resultados diversos. Esta classe foi preparada para aceitar um tipo genérico.
-Por exemplo, o retorno de um método do tipo POST retornará uma resposta com o Id do objeto criado no banco de dados, então poderíamos criar uma classe que terá uma propriedade do tipo GUID ou Long chamada *RegisterResult*:
+### 2. Configurar o Swagger
 
 ```csharp
-public class RegisterResult<T>
+builder.Services.AddSwaggerGen(options =>
 {
-    public T? Id { get; set; }
+    options.CustomSchemaIds(d => d.GetSchemaId());
+    options.OperationFilter<ResponseOperationFilter>();
+});
+```
+
+### 3. ErrorFactory
+
+Utilize a classe `ErrorFactory` para criar erros padronizados de forma rápida:
+
+| Método | Status Code |
+|---|---|
+| `ErrorFactory.BadRequestError()` | 400 |
+| `ErrorFactory.UnauthorizedError()` | 401 |
+| `ErrorFactory.ForbiddenError()` | 403 |
+| `ErrorFactory.NotFoundError()` | 404 |
+| `ErrorFactory.InternalServerError()` | 500 |
+| `ErrorFactory.CustomError(description, statusCode)` | Qualquer |
+| `ErrorFactory.CustomError<T>(description, statusCode, fieldErrors, data)` | Qualquer (com dados customizados) |
+| `ErrorFactory.CustomErrorWithoutData<T>(description, statusCode, fieldErrors)` | Qualquer (sem dados customizados) |
+
+### 4. Status code customizado em respostas de sucesso
+
+```csharp
+return new RegisterResult<Guid> { Id = Guid.NewGuid() }
+    .WithSuccessStatusCode(HttpStatusCode.Created); // 201
+```
+
+---
+
+## Como testar (Endpoints da API de demonstração)
+
+A API de demonstração (`ISTIC.Responses.WebApi`) expõe um CRUD de Produtos no controller `api/Response`. Todos os endpoints simulam cenários de sucesso e erro através de parâmetros de query string.
+
+### GET `api/Response` — Listar produtos
+
+Retorno: `ResponseOf<ProductRequest>`
+
+| Cenário | Como testar |
+|---|---|
+| ✅ Sucesso (200) | `GET /api/Response` |
+| ❌ InternalServerError (500) | `GET /api/Response?simulateError=true` |
+
+### GET `api/Response/{id}` — Buscar produto por Id
+
+Retorno: `ResponseOf<ProductRequest>`
+
+| Cenário | Como testar |
+|---|---|
+| ✅ Sucesso (200) | `GET /api/Response/3fa85f64-5717-4562-b3fc-2c963f66afa6` |
+| ❌ BadRequest (400) | `GET /api/Response/00000000-0000-0000-0000-000000000000` |
+| ❌ Unauthorized (401) | `GET /api/Response/3fa85f64-5717-4562-b3fc-2c963f66afa6?simulateUnauthorized=true` |
+
+### POST `api/Response` — Criar produto
+
+Retorno: `CustomResponseOf<RegisterResult<Guid>, CustomErrorResult>`
+
+| Cenário | Como testar |
+|---|---|
+| ✅ Sucesso (200) | Enviar body com `name` preenchido e `price` > 0 |
+| ❌ BadRequest (400) — Nome vazio | Enviar body com `name` vazio (`""`) |
+| ❌ BadRequest (400) — Preço inválido | Enviar body com `price` = 0 ou negativo |
+| ❌ Conflict (409) — Erro customizado | `POST /api/Response?simulateCustomError=true` com body válido |
+
+**Body de exemplo (sucesso):**
+```json
+{
+  "name": "Notebook",
+  "description": "Notebook Dell Inspiron",
+  "price": 4500.00
 }
 ```
 
-E no controller poderemos especificar o retorno do nosso endpoint da seguinte forma:
-
-```csharp
-[HttpPost]
-public async Task<ResponseOf<RegisterResult<Guid>>> Add(Model request)
+**Body de exemplo (erro de validação — nome vazio):**
+```json
 {
-    // Código que cria um objeto no banco de dados e retorna
+  "name": "",
+  "description": "Descrição",
+  "price": 100.00
 }
 ```
 
-Na documentação do Swagger será exibido o seguinte retorno de resposta para sucesso:
+### PUT `api/Response/{id}` — Atualizar produto
 
-![swagger1 img](/readme-imgs/swagger_1.png)
+Retorno: `Response`
 
-Caso houver um erro, será exibido o seguinte retorno padrão:
+| Cenário | Como testar |
+|---|---|
+| ✅ Sucesso (200) | `PUT /api/Response/00000000-0000-0000-0000-000000000001` com body válido |
+| ❌ BadRequest (400) — Id vazio | `PUT /api/Response/00000000-0000-0000-0000-000000000000` |
+| ❌ BadRequest (400) — Nome vazio | Enviar body com `name` vazio |
+| ❌ NotFound (404) | `PUT /api/Response/3fa85f64-5717-4562-b3fc-2c963f66afa6` (qualquer Id diferente de `000...001`) |
+| ❌ Forbidden (403) | `PUT /api/Response/00000000-0000-0000-0000-000000000001?simulateForbidden=true` |
 
-![swagger2 img](/readme-imgs/swagger_2.png)
-
-Explicação: A classe ***ResponseOf<T>*** recebe como paramêtro o tipo ***RegisterResult<Guid>***
-
-Caso exista algum endpoint que não julgue necessário retornar um objeto de resposta, a classe ***Response*** dará uma resposta de sucesso vazia, porém caso houver erros na execução da aplicação, retornará um objeto de erro padrão igual ao que contém na classe de retorno anterior.
-
-Por exemplo, o retorno de um método do tipo DELETE retornará uma resposta vázia:
-
-```csharp
-[HttpPost]
-public async Task<Response> Delete(Guid Id)
+**Body de exemplo:**
+```json
 {
-    // Código que deleta um objeto no banco de dados e retorna uma resposta vazia
+  "name": "Notebook Atualizado",
+  "description": "Notebook Dell Inspiron 15",
+  "price": 5000.00
 }
 ```
 
-***IMPORTANTE***
-Para que não haja erros na documentação dos retornos dos endpoints no Swagger é ideal que sempre utilize as classes ***ResponseOf<T>*** ou ***Response*** como bases de respostas para todos os endpoints da sua aplicação, do contrário o filtro para especificar cada tipo de resposta não funcionará corretamente.
+### DELETE `api/Response/{id}` — Deletar produto
 
-### Retornar um status code diferente do padrão (200 ou 400):
+Retorno: `Response`
 
-Também é possível especificar o StatusCode do retorno da requisição para respostas de sucesso ou erro com métodos de extensão da classe ***ErrorResponse*** chamados *WithErrorStatusCode<T>()* e *WithSuccessStatusCode()* da seguinte forma:
+| Cenário | Como testar |
+|---|---|
+| ✅ Sucesso (200) | `DELETE /api/Response/00000000-0000-0000-0000-000000000001` |
+| ❌ BadRequest (400) — Id vazio | `DELETE /api/Response/00000000-0000-0000-0000-000000000000` |
+| ❌ NotFound (404) | `DELETE /api/Response/3fa85f64-5717-4562-b3fc-2c963f66afa6` |
+| ❌ InternalServerError (500) | `DELETE /api/Response/3fa85f64-5717-4562-b3fc-2c963f66afa6?simulateInternalError=true` |
 
-Para retornos de erro:
-```csharp
-public async Task<ResponseOf<RegisterResult<Guid>>> Add(Model request)
-{
-    // O método aceita um enum Http Status Code do erro
-    return new ErrorResponse("Error", "Houve algum erro na realização da operação.")
-            .WithErrorStatusCode<RegisterResult<Guid>>(HttpStatusCode.BadRequest); // É necessário especificar o tipo de retorno do método
-}
-```
+---
 
-Para retornos de sucesso, podemos utilizar um dos exemplos anteriores, onde a resposta de sucesso de um método chamado Add retorna uma ResponseOf do tipo RegisterResult<Guid>
-```csharp
-public async Task<ResponseOf<RegisterResult<Guid>>> Add(Model request)
-{
-    // O método deve vir acompanhado de um enum Http Status Code
-    return new RegisterResult<Guid>
-    {
-        Id = Guid().NewGuid()
-    }.WithSuccessStatusCode(HttpStatusCode.Accepted); // Para este caso, não é necessário especificar o tipo de retorno do método
-}
-```
+## Observações importantes
 
-Para respostas do tipo ***Response*** pode ser feito da seguinte forma:
-
-```csharp
-public async Task<Response> Update(User request)
-{
-    // Para erros
-    return Response.ErrorHandle("Error", "Usuário não encontrado.", HttpStatusCode.NotFound);
-
-    // Para sucessos (status code 200)
-    return Response.Success();
-
-    // Para sucessos com diferentes status code
-    return Response.Success(HttpStatusCode.Accepted);
-}
-```
+- Sempre utilize `ResponseOf<T>`, `CustomResponseOf<TResult, TError>` ou `Response` como tipo de retorno dos endpoints para que os filtros do Swagger e o `CustomActionFilter` funcionem corretamente.
+- O `CustomActionFilter` é responsável por definir o status code HTTP da resposta baseado na propriedade `StatusCode` da `IResponse`.
+- Os conversores JSON (`ResponseOfJsonConverterFactory`, `ResponseJsonConverterFactory`, `CustomResponseOfJsonConverterFactory`) garantem que apenas o `Result` (sucesso) ou o `Error`/`CustomError` (erro) seja serializado no corpo da resposta — nunca ambos ao mesmo tempo.
