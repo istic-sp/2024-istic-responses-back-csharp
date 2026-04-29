@@ -22,10 +22,16 @@ public class Error
         return this;
     }
 
-    public HttpStatusCode? GetStatusCode()
+    public Error AddFieldErrors(params (string Key, string Value)[] keyValues)
     {
-        return _statusCode;
+        foreach (var (key, value) in keyValues)
+            FieldErrors.Add(key, value);
+
+        return this;
     }
+
+    public HttpStatusCode? GetStatusCode()
+        => _statusCode;
 }
 
 public class DictionaryError : Dictionary<string, List<string>>

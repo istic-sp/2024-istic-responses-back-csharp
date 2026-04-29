@@ -22,15 +22,26 @@ public class ResponseOperationFilter : IOperationFilter
             if (successReturnType.IsGenericType && successReturnType.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
                 return;
 
-            ConfigureResponses(operation, successReturnType);
+            ConfigureResponses(operation, successReturnType, typeof(Error));
+        }
+        else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(CustomResponseOf<,>))
+        {
+            var successReturnType = returnType.GenericTypeArguments[0];
+            var errorDataType = returnType.GenericTypeArguments[1];
+            var customErrorType = typeof(CustomError<>).MakeGenericType(errorDataType);
+
+            if (successReturnType.IsGenericType && successReturnType.GetInterfaces().Any(x => x.IsGenericType && x.GetGenericTypeDefinition() == typeof(IEnumerable<>)))
+                return;
+
+            ConfigureResponses(operation, successReturnType, customErrorType);
         }
         else if (returnType == typeof(Response))
-            ConfigureResponses(operation, null);
+            ConfigureResponses(operation, null, typeof(Error));
     }
 
-    private void ConfigureResponses(OpenApiOperation operation, Type successReturnType)
+    private void ConfigureResponses(OpenApiOperation operation, Type successReturnType, Type errorType)
     {
-        var errorMediaType = CreateErrorMediaType();
+        var errorMediaType = CreateErrorMediaType(errorType);
 
         if (successReturnType != null)
         {
@@ -74,7 +85,7 @@ public class ResponseOperationFilter : IOperationFilter
         };
     }
 
-    private OpenApiMediaType CreateErrorMediaType()
+    private OpenApiMediaType CreateErrorMediaType(Type errorType)
     {
         return new OpenApiMediaType
         {
@@ -82,7 +93,7 @@ public class ResponseOperationFilter : IOperationFilter
             {
                 Reference = new OpenApiReference
                 {
-                    Id = typeof(Error).GetSchemaId(),
+                    Id = errorType.GetSchemaId(),
                     Type = ReferenceType.Schema
                 }
             }
