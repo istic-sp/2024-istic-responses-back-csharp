@@ -7,6 +7,7 @@ public class CustomResponse<T> : IResponse
 {
     public CustomError<T> CustomError { get; set; }
     public HttpStatusCode StatusCode { get; set; }
+    public Error Error { get; set; }
 
     public static CustomResponse<T> Success(HttpStatusCode statusCode = HttpStatusCode.OK) => new() { StatusCode = statusCode };
     public static CustomResponse<T> ErrorHandle(string name, string description, HttpStatusCode statusCode = HttpStatusCode.BadRequest, T data = default) => Throw(new CustomError<T>(name, description, data: data), statusCode);

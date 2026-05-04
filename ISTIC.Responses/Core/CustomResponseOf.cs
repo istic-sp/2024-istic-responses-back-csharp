@@ -8,6 +8,7 @@ public class CustomResponseOf<TResult, TError> : IResponse
     public CustomError<TError> CustomError { get; set; }
     public TResult Result { get; set; }
     public HttpStatusCode StatusCode { get; set; }
+    public Error Error { get; set; }
 
     public CustomResponseOf() { }
 
